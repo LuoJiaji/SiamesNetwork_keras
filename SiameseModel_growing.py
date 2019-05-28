@@ -11,9 +11,10 @@ from keras.layers import Input, Flatten, Dense, Dropout, Lambda
 from keras.optimizers import RMSprop
 from keras import backend as K
 from keras.models import load_model
-num_classes = 10
+num_classes = 8
 epochs = 40
 train = False
+#train = True
 
 def euclidean_distance(vects):
     x, y = vects
@@ -42,7 +43,8 @@ def create_pairs(x, digit_indices):
     '''
     pairs = []
     labels = []
-    n = min([len(digit_indices[d]) for d in range(num_classes)]) - 1
+    n = min([len(digit_indices[d]) for d in range(len(digit_indices))]) - 1
+    print('min num:',n)
     for d in range(num_classes):
         for i in range(n):
             z1, z2 = digit_indices[d][i], digit_indices[d][i + 1]
@@ -98,10 +100,28 @@ input_shape = x_train.shape[1:]
 
 # create training+test positive and negative pairs
 digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
-
+digit_indices = digit_indices[:num_classes]
+#tr_pairs, tr_y = create_pairs(x_train, digit_indices)
+train_digit_indices = np.hstack([digit_indices[0],digit_indices[1],digit_indices[2],
+                                 digit_indices[3],digit_indices[4],digit_indices[5],
+                                 digit_indices[6],digit_indices[7]])
+train_digit_indices = np.sort(train_digit_indices)
+x_train = x_train[train_digit_indices]
+y_train = y_train[train_digit_indices]
+digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
 tr_pairs, tr_y = create_pairs(x_train, digit_indices)
 
+
 digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
+digit_indices = digit_indices[:num_classes]
+#te_pairs, te_y = create_pairs(x_test, digit_indices)
+test_digit_indices = np.hstack([digit_indices[0],digit_indices[1],digit_indices[2],
+                                digit_indices[3],digit_indices[4],digit_indices[5],
+                                digit_indices[6],digit_indices[7]])
+test_digit_indices = np.sort(test_digit_indices)
+x_test = x_test[test_digit_indices]
+y_test = y_test[test_digit_indices]
+digit_indices = [np.where(y_test == i)[0] for i in range(8)]
 te_pairs, te_y = create_pairs(x_test, digit_indices)
 
 # network definition
@@ -149,15 +169,16 @@ if train == True:
     
     print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
     print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
+    model.save('./model/model_growing.h5')
     
 elif train == False:
-    
-    model = load_model('./model/model.h5',custom_objects={'contrastive_loss': contrastive_loss,'accuracy':accuracy})
-#    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
-#    te_acc = compute_accuracy(te_y, y_pred)
+    path = './model/model_growing.h5'
+    model = load_model(path,custom_objects={'contrastive_loss': contrastive_loss,'accuracy':accuracy})
+    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
+    te_acc = compute_accuracy(te_y, y_pred)
     
         
-    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
+#    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
     print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
     
     #单个数据测试
@@ -176,40 +197,71 @@ elif train == False:
     
     
     #分类数据测试
-    digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
-    result = []
-    num_kind = 6
-    for i in range(len(digit_indices[num_kind])):
-        test_pairs = []
-        if i%1000 == 0:
-            print(i)
-        for j in range(num_classes):
-#            a = x_test[digit_indices[0][0]]
-            a = x_test[digit_indices[num_kind][i]]
-            b = x_test[digit_indices[j][10]]
-            test_pairs += [[a,b]]
-        test_pairs = np.array(test_pairs)
-    
-        result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
-    result = np.array(result)[:,:,0]
-    pre = np.argmin(result,axis=1)
-    acc = np.mean(pre==y_test[digit_indices[num_kind]])
-    
-    #总体数据测试
+#    digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
 #    result = []
-#    for i in range(len(x_test)):
-#        test_pairs=[]
+#    num_kind = 6
+#    for i in range(len(digit_indices[num_kind])):
+#        test_pairs = []
 #        if i%1000 == 0:
 #            print(i)
 #        for j in range(num_classes):
 ##            a = x_test[digit_indices[0][0]]
-#            a = x_test[i]
+#            a = x_test[digit_indices[num_kind][i]]
 #            b = x_test[digit_indices[j][10]]
 #            test_pairs += [[a,b]]
 #        test_pairs = np.array(test_pairs)
-#        
+#    
 #        result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
-#        
 #    result = np.array(result)[:,:,0]
 #    pre = np.argmin(result,axis=1)
-#    acc = np.mean(pre==y_test)
+#    acc = np.mean(pre==y_test[digit_indices[num_kind]])
+#    
+    #总体数据测试
+    result = []
+    for i in range(len(x_test)):
+        test_pairs=[]
+        if i%1000 == 0:
+            print(i)
+        for j in range(8):
+#            a = x_test[digit_indices[0][0]]
+            a = x_test[i]
+            b = x_test[digit_indices[j][8]]
+            test_pairs += [[a,b]]
+        test_pairs = np.array(test_pairs)
+        
+        result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
+        
+    result = np.array(result)[:,:,0]
+    pre_sub = np.argmin(result,axis=1)
+    acc_sub = np.mean(pre_sub==y_test)
+    print('acc1',acc_sub)
+    
+    
+    # 计算数据集改变之后的正确率
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    x_train /= 255
+    x_test /= 255
+
+    num_classes = 10
+    digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
+    
+    result = []
+    for i in range(len(x_test)):
+        test_pairs=[]
+        if i%1000 == 0:
+            print(i)
+        for j in range(num_classes):
+#            a = x_test[digit_indices[0][0]]
+            a = x_test[i]
+            b = x_test[digit_indices[j][8]]
+            test_pairs += [[a,b]]
+        test_pairs = np.array(test_pairs)
+        
+        result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
+        
+    result = np.array(result)[:,:,0]
+    pre_all = np.argmin(result,axis=1)
+    acc_all = np.mean(pre_all==y_test)
+    print('acc2:',acc_all)
