@@ -82,8 +82,8 @@ test_digit_indices = np.sort(test_digit_indices)
 x_test = x_test[test_digit_indices]
 y_test = y_test[test_digit_indices]
 
-y_train = np_utils.to_categorical(y_train, num_classes=8)
-y_test = np_utils.to_categorical(y_test, num_classes=8)
+y_train = np_utils.to_categorical(y_train, num_classes=num_classes)
+y_test = np_utils.to_categorical(y_test, num_classes=num_classes)
 
 
 input_shape = x_train.shape[1:]
@@ -91,7 +91,7 @@ input_shape = x_train.shape[1:]
 base_network = create_base_network(input_shape)
 input_a = Input(shape=input_shape)
 hidden_layer = base_network(input_a)
-output = Dense(8, activation='softmax')(hidden_layer)
+output = Dense(num_classes, activation='softmax')(hidden_layer)
 
 model = Model(input_a, output)
 

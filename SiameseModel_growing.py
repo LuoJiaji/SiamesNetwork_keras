@@ -98,7 +98,8 @@ x_train /= 255
 x_test /= 255
 input_shape = x_train.shape[1:]
 
-# create training+test positive and negative pairs
+# create training+test positive and negative pairs 
+# 注意这里的逻辑问题，先从所有数据集当中选择一部分，然后在从这一部分当中生成数据对
 digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
 digit_indices = digit_indices[:num_classes]
 #tr_pairs, tr_y = create_pairs(x_train, digit_indices)
@@ -121,7 +122,7 @@ test_digit_indices = np.hstack([digit_indices[0],digit_indices[1],digit_indices[
 test_digit_indices = np.sort(test_digit_indices)
 x_test = x_test[test_digit_indices]
 y_test = y_test[test_digit_indices]
-digit_indices = [np.where(y_test == i)[0] for i in range(8)]
+digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
 te_pairs, te_y = create_pairs(x_test, digit_indices)
 
 # network definition
@@ -141,7 +142,7 @@ distance = Lambda(euclidean_distance,
 
 model = Model([input_a, input_b], distance)
 # keras.utils.plot_model(model,"siamModel.png",show_shapes=True)
-model.summary()
+#model.summary()
 
 # train
 if train == True:
@@ -222,7 +223,7 @@ elif train == False:
         test_pairs=[]
         if i%1000 == 0:
             print(i)
-        for j in range(8):
+        for j in range(num_classes):
 #            a = x_test[digit_indices[0][0]]
             a = x_test[i]
             b = x_test[digit_indices[j][8]]
