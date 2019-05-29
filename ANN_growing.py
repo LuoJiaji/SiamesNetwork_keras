@@ -109,7 +109,7 @@ weight_sub = model_sub.get_layer('model_1').get_weights()
 
 
 
-
+# 修改输出层节点个数，并验证未训练时的正确率
 
 num_classes = 10
 
