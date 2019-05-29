@@ -92,11 +92,44 @@ base_network = create_base_network(input_shape)
 input_a = Input(shape=input_shape)
 hidden_layer = base_network(input_a)
 output = Dense(num_classes, activation='softmax')(hidden_layer)
+model_sub = Model(input_a, output)
 
-model = Model(input_a, output)
+model_sub.compile(optimizer=SGD(),loss='categorical_crossentropy',metrics=['accuracy'])
 
-model.compile(optimizer=SGD(),loss='categorical_crossentropy',metrics=['accuracy'])
+#base_network.summary()
+model_sub.summary()
+log_sub = model_sub.fit(x_train,y_train,batch_size=64,epochs=5,validation_data=(x_test,y_test))
+log_sub_loss = log_sub.history.get('loss')
+#t = base_network.get_layer('dense_23')
+#weight = t.get_weights()
+#weight = base_network.get_layer('dense_23').get_weights()
+weight_sub = model_sub.get_layer('model_1').get_weights()
 
-base_network.summary()
-model.summary()
-model.fit(x_train,y_train,batch_size=64,epochs=5,validation_data=(x_test,y_test))
+
+
+
+
+
+
+num_classes = 10
+
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+x_train /= 255
+x_test /= 255
+input_shape = x_train.shape[1:]
+y_train = np_utils.to_categorical(y_train, num_classes=num_classes)
+y_test = np_utils.to_categorical(y_test, num_classes=num_classes)
+
+input_a = Input(shape=input_shape)
+hidden_layer = base_network(input_a)
+output = Dense(num_classes, activation='softmax')(hidden_layer)
+model_full = Model(input_a, output)
+
+model_full.summary()
+weight_full = model_full.get_layer('model_1').get_weights()
+
+model_full.compile(optimizer=SGD(),loss='categorical_crossentropy',metrics=['accuracy'])
+log_full = model_full.fit(x_train,y_train,batch_size=64,epochs=5,validation_data=(x_test,y_test))
+log_full_loss = log_full.history.get('loss')
