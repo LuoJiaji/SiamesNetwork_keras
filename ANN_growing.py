@@ -52,7 +52,7 @@ def create_base_network(input_shape):
     x = Dense(128, activation='relu')(x)
     x = Dropout(0.1)(x)
     x = Dense(128, activation='relu')(x)
-    x = Dense(8, activation='softmax')(x)
+#    x = Dense(8, activation='softmax')(x)
     return Model(input, x)
 
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -90,7 +90,8 @@ input_shape = x_train.shape[1:]
 
 base_network = create_base_network(input_shape)
 input_a = Input(shape=input_shape)
-output = base_network(input_a)
+hidden_layer = base_network(input_a)
+output = Dense(8, activation='softmax')(hidden_layer)
 
 model = Model(input_a, output)
 
