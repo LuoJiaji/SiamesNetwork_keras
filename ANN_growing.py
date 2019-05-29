@@ -131,5 +131,14 @@ model_full.summary()
 weight_full = model_full.get_layer('model_1').get_weights()
 
 model_full.compile(optimizer=SGD(),loss='categorical_crossentropy',metrics=['accuracy'])
+
+
+pre_all = model_full.predict(x_test)
+pre_all = np.argmax(pre_all,axis=1)
+test_label = np.argmax(y_test,axis=1)
+acc_all = np.mean(pre_all == test_label)
+print('accuracy all:',acc_all)
+
+
 log_full = model_full.fit(x_train,y_train,batch_size=64,epochs=5,validation_data=(x_test,y_test))
 log_full_loss = log_full.history.get('loss')
