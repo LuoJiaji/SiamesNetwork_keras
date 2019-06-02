@@ -13,8 +13,8 @@ from keras import backend as K
 from keras.models import load_model
 num_classes = 8
 epochs = 40
-train = False
-#train = True
+#train = False
+train = True
 
 def euclidean_distance(vects):
     x, y = vects
@@ -171,6 +171,44 @@ if train == True:
     print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
     print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
     model.save('./model/model_growing.h5')
+    
+    
+    # 改变数据集之后再一次训练模型
+    num_classes = 10
+    
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    x_train /= 255
+    x_test /= 255
+    input_shape = x_train.shape[1:]
+    
+    digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
+    tr_pairs, tr_y = create_pairs(x_train, digit_indices)
+    
+    digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
+    te_pairs, te_y = create_pairs(x_test, digit_indices)
+    
+    history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y,
+              batch_size=128,
+              epochs=epochs,verbose=2,
+              validation_data=([te_pairs[:, 0], te_pairs[:, 1]], te_y))
+    
+    plt.figure(figsize=(8, 4))
+    plt.subplot(1, 2, 1)
+    plot_train_history(history, 'loss', 'val_loss')
+    plt.subplot(1, 2, 2)
+    plot_train_history(history, 'accuracy', 'val_accuracy')
+    plt.show()
+    
+    y_pred = model.predict([tr_pairs[:, 0], tr_pairs[:, 1]])
+    tr_acc = compute_accuracy(tr_y, y_pred)
+    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
+    te_acc = compute_accuracy(te_y, y_pred)
+    
+    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
+    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
+    model.save('./model/model_full.h5')
     
 elif train == False:
     path = './model/model_growing.h5'
