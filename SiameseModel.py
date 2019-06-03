@@ -13,7 +13,8 @@ from keras import backend as K
 from keras.models import load_model
 num_classes = 10
 epochs = 40
-train = False
+train = True
+#train = False
 
 def euclidean_distance(vects):
     x, y = vects
@@ -127,27 +128,33 @@ if train == True:
     rms = RMSprop()
     model.compile(loss=contrastive_loss, optimizer=rms, metrics=[accuracy])
     
-    history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y,
-              batch_size=128,
-              epochs=epochs,verbose=2,
-              validation_data=([te_pairs[:, 0], te_pairs[:, 1]], te_y))
+#    history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y,
+#              batch_size=128,
+#              epochs=epochs,verbose=2,
+#              validation_data=([te_pairs[:, 0], te_pairs[:, 1]], te_y))
+#    
+#
+#    plt.figure(figsize=(8, 4))
+#    plt.subplot(1, 2, 1)
+#    plot_train_history(history, 'loss', 'val_loss')
+#    plt.subplot(1, 2, 2)
+#    plot_train_history(history, 'accuracy', 'val_accuracy')
+#    plt.show()
     
-    plt.figure(figsize=(8, 4))
-    plt.subplot(1, 2, 1)
-    plot_train_history(history, 'loss', 'val_loss')
-    plt.subplot(1, 2, 2)
-    plot_train_history(history, 'accuracy', 'val_accuracy')
-    plt.show()
 
-
-    # compute final accuracy on training and test sets
-    y_pred = model.predict([tr_pairs[:, 0], tr_pairs[:, 1]])
-    tr_acc = compute_accuracy(tr_y, y_pred)
-    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
-    te_acc = compute_accuracy(te_y, y_pred)
+#    # compute final accuracy on training and test sets
+#    y_pred = model.predict([tr_pairs[:, 0], tr_pairs[:, 1]])
+#    tr_acc = compute_accuracy(tr_y, y_pred)
+#    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
+#    te_acc = compute_accuracy(te_y, y_pred)
+#    
+#    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
+#    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
     
-    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
-    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
+    for i in range(1000):
+        train_loss, train_accuracy = model.train_on_batch(
+                [tr_pairs[:, 0], tr_pairs[:, 1]], tr_y)
+        print('iteration:',i,'loss:',train_loss,'accuracy:',train_accuracy)
     
 elif train == False:
     
@@ -156,8 +163,8 @@ elif train == False:
 #    te_acc = compute_accuracy(te_y, y_pred)
     
         
-    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
-    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
+#    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
+#    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
     
     #单个数据测试
 #    res = []  
