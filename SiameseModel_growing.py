@@ -13,6 +13,7 @@ from keras import backend as K
 from keras.models import load_model
 num_classes = 8
 epochs = 40
+iteration = 10000
 #train = False
 train = True
 
@@ -86,10 +87,10 @@ def create_base_network(input_shape):
     '''
     input = Input(shape=input_shape)
     x = Flatten()(input)
+    x = Dense(512, activation='relu')(x)
+#    x = Dropout(0.5)(x)
     x = Dense(128, activation='relu')(x)
-    x = Dropout(0.1)(x)
-    x = Dense(128, activation='relu')(x)
-    x = Dropout(0.1)(x)
+    x = Dropout(0.5)(x)
     x = Dense(128, activation='relu')(x)
     return Model(input, x)
 
@@ -201,13 +202,13 @@ if train == True:
 #    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
 #    model.save('./model/model_growing.h5')
     
-    for it in range(5000):
+    for it in range(iteration):
 #        train_loss, train_accuracy = model.train_on_batch(
 #                [tr_pairs[:, 0], tr_pairs[:, 1]], tr_y)
         train_pairs, train_y = create_rand_batch_pairs(x_train, train_digit_indices,256)
         train_loss, train_accuracy = model.train_on_batch([train_pairs[:, 0], train_pairs[:, 1]], train_y)
         
-        if it % 100 == 0:
+        if (it+1) % 100 == 0 or it == 0:
             print('iteration:',it,'loss:',train_loss,'accuracy:',train_accuracy)
         
         if (it+1) % 1000 == 0 or it == 0:
@@ -267,13 +268,13 @@ if train == True:
 #    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
 #    model.save('./model/model_full.h5')
     
-    for it in range(5000):
+    for it in range(iteration):
 #        train_loss, train_accuracy = model.train_on_batch(
 #                [tr_pairs[:, 0], tr_pairs[:, 1]], tr_y)
         train_pairs, train_y = create_rand_batch_pairs(x_train, train_digit_indices,256)
         train_loss, train_accuracy = model.train_on_batch([train_pairs[:, 0], train_pairs[:, 1]], train_y)
         
-        if it % 100 == 0:
+        if (it+1) % 100 == 0 or it == 0:
             print('iteration:',it,'loss:',train_loss,'accuracy:',train_accuracy)
         
         if (it+1) % 1000 == 0 or it == 0:
