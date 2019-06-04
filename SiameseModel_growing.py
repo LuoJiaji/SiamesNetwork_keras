@@ -267,6 +267,24 @@ if train == True:
 #    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
 #    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
 #    model.save('./model/model_full.h5')
+    result = []
+    for i in range(len(x_test)):
+        test_pairs=[]
+#                if i%1000 == 0:
+#                    print(i)
+        for j in range(num_classes):
+#            a = x_test[digit_indices[0][0]]
+            a = x_test[i]
+            b = x_test[test_digit_indices[j][10]]
+            test_pairs += [[a,b]]
+        test_pairs = np.array(test_pairs)
+        
+        result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
+        
+    result = np.array(result)[:,:,0]
+    pre = np.argmin(result,axis=1)
+    acc = np.mean(pre==y_test)
+    print('change data set test accuracy:',acc)
     
     for it in range(iteration):
 #        train_loss, train_accuracy = model.train_on_batch(
