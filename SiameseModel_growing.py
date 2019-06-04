@@ -56,6 +56,30 @@ def create_pairs(x, digit_indices):
             labels += [1, 0]
     return np.array(pairs), np.array(labels)
 
+def create_rand_batch_pairs(x, digit_indices, batch):
+    '''Positive and negative pair creation.
+    Alternates between positive and negative pairs.
+    '''
+    pairs = []
+    labels = []
+        
+    for d in range(int(batch/2)):
+        n = np.random.randint(num_classes)
+        ind1 = np.random.randint(len(digit_indices[n]))
+        ind2 = np.random.randint(len(digit_indices[n]))
+        z1, z2 = digit_indices[n][ind1], digit_indices[n][ind2]
+        pairs += [[x[z1], x[z2]]]
+        
+        dn = np.random.randint(num_classes)
+        while dn == n:
+            dn = np.random.randint(num_classes)
+            
+        ind3 = np.random.randint(len(digit_indices[dn]))
+        z1, z2 = digit_indices[n][ind1], digit_indices[dn][ind3]
+        pairs += [[x[z1], x[z2]]]
+        labels += [1, 0]    
+    return np.array(pairs), np.array(labels)
+
 
 def create_base_network(input_shape):
     '''Base network to be shared (eq. to feature extraction).
@@ -103,27 +127,33 @@ input_shape = x_train.shape[1:]
 digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
 digit_indices = digit_indices[:num_classes]
 #tr_pairs, tr_y = create_pairs(x_train, digit_indices)
-train_digit_indices = np.hstack([digit_indices[0],digit_indices[1],digit_indices[2],
-                                 digit_indices[3],digit_indices[4],digit_indices[5],
-                                 digit_indices[6],digit_indices[7]])
-train_digit_indices = np.sort(train_digit_indices)
+#train_digit_indices = np.hstack([digit_indices[0],digit_indices[1],digit_indices[2],
+#                                 digit_indices[3],digit_indices[4],digit_indices[5],
+#                                 digit_indices[6],digit_indices[7]])
+train_digit_indices = []
+for i in range(num_classes):
+    train_digit_indices = np.hstack([train_digit_indices,digit_indices[i]])
+train_digit_indices = np.sort(train_digit_indices).astype('int')
 x_train = x_train[train_digit_indices]
 y_train = y_train[train_digit_indices]
-digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
-tr_pairs, tr_y = create_pairs(x_train, digit_indices)
+train_digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
+#tr_pairs, tr_y = create_pairs(x_train, digit_indices)
 
 
 digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
 digit_indices = digit_indices[:num_classes]
 #te_pairs, te_y = create_pairs(x_test, digit_indices)
-test_digit_indices = np.hstack([digit_indices[0],digit_indices[1],digit_indices[2],
-                                digit_indices[3],digit_indices[4],digit_indices[5],
-                                digit_indices[6],digit_indices[7]])
-test_digit_indices = np.sort(test_digit_indices)
+#test_digit_indices = np.hstack([digit_indices[0],digit_indices[1],digit_indices[2],
+#                                digit_indices[3],digit_indices[4],digit_indices[5],
+#                                digit_indices[6],digit_indices[7]])
+test_digit_indices = []
+for i in range(num_classes):
+    test_digit_indices = np.hstack([test_digit_indices,digit_indices[i]])
+test_digit_indices = np.sort(test_digit_indices).astype('int')
 x_test = x_test[test_digit_indices]
 y_test = y_test[test_digit_indices]
-digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
-te_pairs, te_y = create_pairs(x_test, digit_indices)
+test_digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
+#te_pairs, te_y = create_pairs(x_test, digit_indices)
 
 # network definition
 base_network = create_base_network(input_shape)
@@ -149,29 +179,56 @@ if train == True:
     rms = RMSprop()
     model.compile(loss=contrastive_loss, optimizer=rms, metrics=[accuracy])
     
-    history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y,
-              batch_size=128,
-              epochs=epochs,verbose=2,
-              validation_data=([te_pairs[:, 0], te_pairs[:, 1]], te_y))
+#    history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y,
+#              batch_size=128,
+#              epochs=epochs,verbose=2,
+#              validation_data=([te_pairs[:, 0], te_pairs[:, 1]], te_y))
+#    
+#    plt.figure(figsize=(8, 4))
+#    plt.subplot(1, 2, 1)
+#    plot_train_history(history, 'loss', 'val_loss')
+#    plt.subplot(1, 2, 2)
+#    plot_train_history(history, 'accuracy', 'val_accuracy')
+#    plt.show()
     
-    plt.figure(figsize=(8, 4))
-    plt.subplot(1, 2, 1)
-    plot_train_history(history, 'loss', 'val_loss')
-    plt.subplot(1, 2, 2)
-    plot_train_history(history, 'accuracy', 'val_accuracy')
-    plt.show()
-
-
     # compute final accuracy on training and test sets
-    y_pred = model.predict([tr_pairs[:, 0], tr_pairs[:, 1]])
-    tr_acc = compute_accuracy(tr_y, y_pred)
-    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
-    te_acc = compute_accuracy(te_y, y_pred)
+#    y_pred = model.predict([tr_pairs[:, 0], tr_pairs[:, 1]])
+#    tr_acc = compute_accuracy(tr_y, y_pred)
+#    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
+#    te_acc = compute_accuracy(te_y, y_pred)
+#    
+#    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
+#    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
+#    model.save('./model/model_growing.h5')
     
-    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
-    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
-    model.save('./model/model_growing.h5')
-    
+    for it in range(5000):
+#        train_loss, train_accuracy = model.train_on_batch(
+#                [tr_pairs[:, 0], tr_pairs[:, 1]], tr_y)
+        train_pairs, train_y = create_rand_batch_pairs(x_train, train_digit_indices,256)
+        train_loss, train_accuracy = model.train_on_batch([train_pairs[:, 0], train_pairs[:, 1]], train_y)
+        
+        if it % 100 == 0:
+            print('iteration:',it,'loss:',train_loss,'accuracy:',train_accuracy)
+        
+        if (it+1) % 1000 == 0 or it == 0:
+            result = []
+            for i in range(len(x_test)):
+                test_pairs=[]
+#                if i%1000 == 0:
+#                    print(i)
+                for j in range(num_classes):
+        #            a = x_test[digit_indices[0][0]]
+                    a = x_test[i]
+                    b = x_test[test_digit_indices[j][10]]
+                    test_pairs += [[a,b]]
+                test_pairs = np.array(test_pairs)
+                
+                result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
+                
+            result = np.array(result)[:,:,0]
+            pre = np.argmin(result,axis=1)
+            acc = np.mean(pre==y_test)
+            print('test accuracy:',acc)
     
     # 改变数据集之后再一次训练模型
     num_classes = 10
@@ -183,32 +240,61 @@ if train == True:
     x_test /= 255
     input_shape = x_train.shape[1:]
     
-    digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
-    tr_pairs, tr_y = create_pairs(x_train, digit_indices)
+    train_digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
+#    tr_pairs, tr_y = create_pairs(x_train, digit_indices)
     
-    digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
-    te_pairs, te_y = create_pairs(x_test, digit_indices)
+    test_digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
+#    te_pairs, te_y = create_pairs(x_test, digit_indices)
     
-    history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y,
-              batch_size=128,
-              epochs=epochs,verbose=2,
-              validation_data=([te_pairs[:, 0], te_pairs[:, 1]], te_y))
+#    history=model.fit([tr_pairs[:, 0], tr_pairs[:, 1]], tr_y,
+#              batch_size=128,
+#              epochs=epochs,verbose=2,
+#              validation_data=([te_pairs[:, 0], te_pairs[:, 1]], te_y))
+#    
+#    plt.figure(figsize=(8, 4))
+#    plt.subplot(1, 2, 1)
+#    plot_train_history(history, 'loss', 'val_loss')
+#    plt.subplot(1, 2, 2)
+#    plot_train_history(history, 'accuracy', 'val_accuracy')
+#    plt.show()
+       
+#    y_pred = model.predict([tr_pairs[:, 0], tr_pairs[:, 1]])
+#    tr_acc = compute_accuracy(tr_y, y_pred)
+#    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
+#    te_acc = compute_accuracy(te_y, y_pred)
+#    
+#    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
+#    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
+#    model.save('./model/model_full.h5')
     
-    plt.figure(figsize=(8, 4))
-    plt.subplot(1, 2, 1)
-    plot_train_history(history, 'loss', 'val_loss')
-    plt.subplot(1, 2, 2)
-    plot_train_history(history, 'accuracy', 'val_accuracy')
-    plt.show()
-    
-    y_pred = model.predict([tr_pairs[:, 0], tr_pairs[:, 1]])
-    tr_acc = compute_accuracy(tr_y, y_pred)
-    y_pred = model.predict([te_pairs[:, 0], te_pairs[:, 1]])
-    te_acc = compute_accuracy(te_y, y_pred)
-    
-    print('* Accuracy on training set: %0.2f%%' % (100 * tr_acc))
-    print('* Accuracy on test set: %0.2f%%' % (100 * te_acc))
-    model.save('./model/model_full.h5')
+    for it in range(5000):
+#        train_loss, train_accuracy = model.train_on_batch(
+#                [tr_pairs[:, 0], tr_pairs[:, 1]], tr_y)
+        train_pairs, train_y = create_rand_batch_pairs(x_train, train_digit_indices,256)
+        train_loss, train_accuracy = model.train_on_batch([train_pairs[:, 0], train_pairs[:, 1]], train_y)
+        
+        if it % 100 == 0:
+            print('iteration:',it,'loss:',train_loss,'accuracy:',train_accuracy)
+        
+        if (it+1) % 1000 == 0 or it == 0:
+            result = []
+            for i in range(len(x_test)):
+                test_pairs=[]
+#                if i%1000 == 0:
+#                    print(i)
+                for j in range(num_classes):
+        #            a = x_test[digit_indices[0][0]]
+                    a = x_test[i]
+                    b = x_test[test_digit_indices[j][10]]
+                    test_pairs += [[a,b]]
+                test_pairs = np.array(test_pairs)
+                
+                result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
+                
+            result = np.array(result)[:,:,0]
+            pre = np.argmin(result,axis=1)
+            acc = np.mean(pre==y_test)
+            print('test accuracy:',acc)
     
 elif train == False:
     path = './model/model_growing.h5'
