@@ -197,9 +197,9 @@ if train == True:
         # print('shape:',train_pairs.shape)
         train_loss, train_accuracy = model.train_on_batch([train_pairs[:, 0], train_pairs[:, 1]], train_y)
  
-        if it % 100 == 0:
+        if (it+1) % 100 == 0 or it == 0:
             print('iteration:',it,'loss:',train_loss,'accuracy:',train_accuracy)
-        if (it+1) % 1000 == 0:
+        if (it+1) % 1000 == 0 or it == 0:
             result = []
             l = len(x_test)
             for i in range(len(x_test)):
@@ -225,7 +225,7 @@ if train == True:
             print('test accuracy:',acc)
             
         start += 1
-    path = './model/model_'+str(start)+'.h5'
+    path = './model/model_ANN_'+str(start)+'.h5'
     model.save(path)
     print('model save:',path)
 

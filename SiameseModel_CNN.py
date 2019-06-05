@@ -205,7 +205,7 @@ if train == True:
             for i in range(len(x_test)):
                 if i%100 == 0:
                     print('\r','test:', i, '/', l, end='')
-                        
+
                 test_pairs=[]
 #                if i%1000 == 0:
 #                    print(i)
@@ -225,7 +225,7 @@ if train == True:
             print('test accuracy:',acc)
             
         start += 1
-    path = './model/model_'+str(start)+'.h5'
+    path = './model/model_CNN_'+str(start)+'.h5'
     model.save(path)
     print('model save:',path)
 
