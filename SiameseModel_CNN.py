@@ -11,6 +11,9 @@ from keras.layers import Input, Flatten, Dense, Dropout, Lambda
 from keras.optimizers import RMSprop, SGD
 from keras import backend as K
 from keras.models import load_model
+from keras.layers.convolutional import Conv2D
+from keras.layers.pooling import MaxPooling2D
+
 num_classes = 10
 epochs = 40
 train = True
@@ -82,14 +85,24 @@ def create_rand_batch_pairs(x, digit_indices,batch):
 def create_base_network(input_shape):
     '''Base network to be shared (eq. to feature extraction).
     '''
-    input = Input(shape=input_shape)
-    x = Flatten()(input)
-    x = Dense(512, activation='relu')(x)
-#    x = Dropout(0.1)(x)
-    x = Dense(128, activation='relu')(x)
-#    x = Dropout(0.1)(x)
-    x = Dense(128, activation='relu')(x)
-    return Model(input, x)
+#     input = Input(shape=input_shape)
+#     x = Flatten()(input)
+#     x = Dense(512, activation='relu')(x)
+# #    x = Dropout(0.1)(x)
+#     x = Dense(128, activation='relu')(x)
+# #    x = Dropout(0.1)(x)
+#     x = Dense(128, activation='relu')(x)
+    input_data = Input(shape=input_shape)
+    x = Conv2D(32, (3, 3), activation='relu', padding='same', name='block1_conv1')(input_data)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
+    x = Conv2D(32, (3, 3), activation='relu', padding='same', name='block1_conv2')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
+    x = Flatten(name='flatten')(x)
+    x = Dense(128, activation='relu', name='fc1')(x)
+    x = Dense(128, activation='relu', name='fc2')(x)
+    # x = Dropout(0.5)(x)
+    # x = Dense(num_classes, activation='softmax', name='predictions')(x)
+    return Model(input_data, x)
 
 
 def compute_accuracy(y_true, y_pred): # numpy上的操作
@@ -119,7 +132,8 @@ x_test = x_test.astype('float32')
 x_train /= 255
 x_test /= 255
 input_shape = x_train.shape[1:]
-
+input_shape = (28,28,1)
+print('input shape:',input_shape)
 # create training+test positive and negative pairs
 train_digit_indices = [np.where(y_train == i)[0] for i in range(num_classes)]
 train_pairs, train_y = create_pairs(x_train, train_digit_indices)
@@ -129,6 +143,7 @@ test_pairs, test_y = create_pairs(x_test, test_digit_indices)
 
 # network definition
 base_network = create_base_network(input_shape)
+base_network.summary()
 
 input_a = Input(shape=input_shape)
 input_b = Input(shape=input_shape)
@@ -139,13 +154,12 @@ input_b = Input(shape=input_shape)
 processed_a = base_network(input_a)
 processed_b = base_network(input_b)
 
-distance = Lambda(euclidean_distance,
-                  output_shape=eucl_dist_output_shape)([processed_a, processed_b])
+distance = Lambda(euclidean_distance, output_shape=eucl_dist_output_shape)([processed_a, processed_b])
 
 model = Model([input_a, input_b], distance)
 # keras.utils.plot_model(model,"siamModel.png",show_shapes=True)
 model.summary()
-
+# quit()
 # train
 if train == True:
     # rms = RMSprop()
@@ -179,14 +193,19 @@ if train == True:
 #        train_loss, train_accuracy = model.train_on_batch(
 #                [tr_pairs[:, 0], tr_pairs[:, 1]], tr_y)
         train_pairs, train_y = create_rand_batch_pairs(x_train, train_digit_indices,256)
-        train_loss, train_accuracy = model.train_on_batch(
-                [train_pairs[:, 0], train_pairs[:, 1]], train_y)
+        train_pairs = np.expand_dims(train_pairs, axis=4)
+        # print('shape:',train_pairs.shape)
+        train_loss, train_accuracy = model.train_on_batch([train_pairs[:, 0], train_pairs[:, 1]], train_y)
  
-        if it % 100 == 0:
+        if it % 10 == 0:
             print('iteration:',it,'loss:',train_loss,'accuracy:',train_accuracy)
-        if (it+1) % 1000 == 0:
+        if (it+1) % 100 == 0:
             result = []
+            l = len(x_test)
             for i in range(len(x_test)):
+                if i%100 == 0:
+                    print('\r','test:', i, '/', l, end='')
+                        
                 test_pairs=[]
 #                if i%1000 == 0:
 #                    print(i)
@@ -196,12 +215,13 @@ if train == True:
                     b = x_test[test_digit_indices[j][10]]
                     test_pairs += [[a,b]]
                 test_pairs = np.array(test_pairs)
-                
+                test_pairs = np.expand_dims(test_pairs, axis=4)
                 result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
                 
             result = np.array(result)[:,:,0]
             pre = np.argmin(result,axis=1)
             acc = np.mean(pre==y_test)
+            print('\r','*'*60)
             print('test accuracy:',acc)
             
         start += 1
@@ -247,7 +267,8 @@ elif train == False:
             b = x_test[digit_indices[j][10]]
             test_pairs += [[a,b]]
         test_pairs = np.array(test_pairs)
-    
+        train_pairs = np.expand_dims(train_pairs, axis=4)
+
         result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
     result = np.array(result)[:,:,0]
     pre = np.argmin(result,axis=1)
