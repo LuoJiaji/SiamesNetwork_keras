@@ -16,9 +16,9 @@ from keras.layers.pooling import MaxPooling2D
 
 num_classes = 10
 epochs = 40
-train = True
-#train = False
-
+#train = True
+train = False
+    
 def euclidean_distance(vects):
     x, y = vects
     sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
@@ -256,7 +256,7 @@ elif train == False:
     #分类数据测试
     digit_indices = [np.where(y_test == i)[0] for i in range(num_classes)]
     result = []
-    num_kind = 6
+    num_kind = 5
     for i in range(len(digit_indices[num_kind])):
         test_pairs = []
         if i%1000 == 0:
@@ -267,12 +267,15 @@ elif train == False:
             b = x_test[digit_indices[j][10]]
             test_pairs += [[a,b]]
         test_pairs = np.array(test_pairs)
-        train_pairs = np.expand_dims(train_pairs, axis=4)
+#        train_pairs = np.expand_dims(train_pairs, axis=4)
 
         result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
     result = np.array(result)[:,:,0]
     pre = np.argmin(result,axis=1)
-    acc = np.mean(pre==y_test[digit_indices[num_kind]])
+    y = y_test[digit_indices[num_kind]]
+    pre = pre.astype('float32')
+    y = y.astype('float32')
+    acc = np.mean(pre == y)
     
     #总体数据测试
 #    result = []
@@ -281,7 +284,7 @@ elif train == False:
 #        if i%1000 == 0:
 #            print(i)
 #        for j in range(num_classes):
-##            a = x_test[digit_indices[0][0]]
+#            a = x_test[digit_indices[0][0]]
 #            a = x_test[i]
 #            b = x_test[digit_indices[j][10]]
 #            test_pairs += [[a,b]]
@@ -290,5 +293,5 @@ elif train == False:
 #        result += [model.predict([test_pairs[:, 0], test_pairs[:, 1]])]
 #        
 #    result = np.array(result)[:,:,0]
-#    pre = np.argmin(result,axis=1)
+#    pre = np.argmin(result, axis=1)
 #    acc = np.mean(pre==y_test)
